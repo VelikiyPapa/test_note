@@ -15,6 +15,8 @@ func SendJSON(w http.ResponseWriter, code int, data any) {
 
 // TODO подумать насчет интерфейса в аргументах
 
+// TODO сделать более универсальный вариант
+
 func ReadJSON(w http.ResponseWriter, r *http.Request, data any) {
 	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
 		http.Error(w, "Не смог распарсить json", http.StatusBadRequest)

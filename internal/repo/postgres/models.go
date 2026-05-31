@@ -12,7 +12,7 @@ type NoteDB struct {
 	UpdatetAt time.Time `gorm:"column:updated_at;not null"`
 }
 
-func(NoteDB) TableName() string {
+func (NoteDB) TableName() string {
 	return "notes"
 }
 
@@ -24,7 +24,7 @@ func ToNoteDB(mn models.Note) NoteDB {
 
 func ToNoteModel(nb NoteDB) models.Note {
 	return models.Note{
-		ID: nb.ID,
+		ID:   nb.ID,
 		Text: nb.Text,
 	}
 }

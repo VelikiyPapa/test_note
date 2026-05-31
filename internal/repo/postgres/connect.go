@@ -14,7 +14,7 @@ func Open(dsn string, maxOpenConns, maxIdleConns int, connMaxLifeTime time.Durat
 		return nil, err
 	}
 
-	sql, err := db.DB() 
+	sql, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -27,16 +27,16 @@ func Open(dsn string, maxOpenConns, maxIdleConns int, connMaxLifeTime time.Durat
 	return db, nil
 }
 
-// TODO - добавить миграцию
+// DONE - добавить миграцию
 func Migrate(db *gorm.DB) error {
 	log.Println("автомиграция началась")
-	
+
 	err := db.AutoMigrate(&NoteDB{})
 	if err != nil {
 		return err
 	}
 
-	log.Println("автомиграция успешно завершилась") 
+	log.Println("автомиграция успешно завершилась")
 
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 func (ns *NoteStorage) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// ns.mu.Lock()
 	// defer ns.mu.Unlock()
-	
+
 	log.Println(r.Method)
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Неверный метод", http.StatusMethodNotAllowed)
