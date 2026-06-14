@@ -19,7 +19,6 @@ func Open(dsn string, maxOpenConns, maxIdleConns int, connMaxLifeTime time.Durat
 		return nil, err
 	}
 
-	// TODO - почитать другие set
 	sql.SetMaxOpenConns(maxOpenConns)
 	sql.SetMaxIdleConns(maxIdleConns)
 	sql.SetConnMaxLifetime(connMaxLifeTime)
@@ -27,7 +26,6 @@ func Open(dsn string, maxOpenConns, maxIdleConns int, connMaxLifeTime time.Durat
 	return db, nil
 }
 
-// DONE - добавить миграцию
 func Migrate(db *gorm.DB) error {
 	log.Println("автомиграция началась")
 

@@ -8,11 +8,11 @@ import (
 	"test/internal/models"
 )
 
-// DONE добавить get delete
 type NoteService interface {
 	CreateNote(ctx context.Context, note models.Note) error
 	GetNote(ctx context.Context, id int) (models.Note, error)
 	DeleteNote(ctx context.Context, id int) error
+	PutNote(ctx context.Context, id int, note models.Note) error
 }
 
 type NoteHandler struct {
@@ -92,4 +92,39 @@ func (nh *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (nh *NoteHandler) PutNote(w http.ResponseWriter, r *http.Request) {
+	rawID := r.PathValue("id")
+	if rawID == "" {
+		http.Error(w, "некорректный id", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(rawID)
+	if err != nil {
+		http.Error(w, "некорректный id", http.StatusBadRequest)
+		return
+	}
+
+	var note models.Note
+
+	if err := json.NewDecoder(r.Body).Decode(&note); err != nil {
+		http.Error(w, "не удалось распарсить json", http.StatusBadRequest)
+		return
+	}
+
+	err = nh.Service.PutNote(r.Context(), id, note)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := map[string]string{
+		"msg": "Заметка успешно обновлена",
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }

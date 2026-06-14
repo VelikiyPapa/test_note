@@ -2,13 +2,14 @@ package my_http
 
 import "net/http"
 
-// DONE переписать руками роутер
+// DONE переписать роутер
 func NewRouter(ns *NoteHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /note", ns.CreateNote)
-	mux.HandleFunc("GET /note/{id}", ns.GetNote)
-	mux.HandleFunc("DELETE /note/{id}", ns.DeleteNote)
+	mux.Handle("POST /notes", LoggingMiddleware(http.HandlerFunc(ns.CreateNote)))
+	mux.Handle("GET /notes/{id}", LoggingMiddleware(http.HandlerFunc(ns.GetNote)))
+	mux.Handle("DELETE /notes/{id}", LoggingMiddleware(http.HandlerFunc(ns.DeleteNote)))
+	mux.Handle("PUT /notes/{id}", LoggingMiddleware(http.HandlerFunc(ns.PutNote)))
 
 	return mux
 }

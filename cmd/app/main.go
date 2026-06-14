@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"test/internal/config"
 	"test/internal/delivery/my_http"
 	"test/internal/repo/postgres"
@@ -10,11 +14,11 @@ import (
 	"time"
 )
 
-// TODO создать в сервисе файл note_use_case и реализовать интерфейс
+// DONE реализовать update на всех слоях (put)
 
-// DONE добавить параметры для настрйоки бд
+// DONE сделать graceful shutdown
 
-// DONE над каждым шагом накинуть логи
+// DONE в mw логирвоание: реализовать получение статус кода для клиента
 
 func main() {
 	log.Println("получаем конфиги")
@@ -37,11 +41,44 @@ func main() {
 	log.Println("создаем слой бизнес логики")
 	noteService := service.NewNoteService(noteRepo)
 
-	// DONE реализовать роутер (транспортный слой)
 	log.Println("реализуем транспортный слой (роутер)")
 	noteHandler := my_http.NewNoteHandler(noteService)
 	mux := my_http.NewRouter(noteHandler)
 
-	log.Println("Сервер запустился на 8080")
-	http.ListenAndServe(":8080", mux)
+	// log.Println("Сервер запустился на 8080")
+	// http.ListenAndServe(":8080", mux)
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	go func() {
+		log.Println("Сервер запустился на 8080")
+
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	log.Println("получен сигнал остановки сервера")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("сервер корректно остановлен")
 }

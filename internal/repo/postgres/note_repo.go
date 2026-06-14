@@ -17,18 +17,16 @@ func NewNoteRepo(db *gorm.DB) *NoteRepo {
 	}
 }
 
-// CreateNote
 func (nr *NoteRepo) Create(ctx context.Context, note models.Note) error {
 	noteDB := ToNoteDB(note)
 
-	if err := nr.DB.WithContext(ctx).Create(noteDB).Error; err != nil {
+	if err := nr.DB.WithContext(ctx).Create(&noteDB).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// GetNote
 func (nr *NoteRepo) Get(ctx context.Context, id int) (models.Note, error) {
 	var noteDB NoteDB
 
@@ -41,7 +39,6 @@ func (nr *NoteRepo) Get(ctx context.Context, id int) (models.Note, error) {
 	return note, nil
 }
 
-// DeleteNote
 func (nr *NoteRepo) Delete(ctx context.Context, id int) error {
 	var noteDB NoteDB
 
@@ -51,9 +48,25 @@ func (nr *NoteRepo) Delete(ctx context.Context, id int) error {
 		return err
 	}
 
-	// DONE проверить корректность записи
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+func (nr *NoteRepo) Put(ctx context.Context, id int, note models.Note) error {
+	var noteDB NoteDB
+
+	if err := nr.DB.WithContext(ctx).First(&noteDB, id).Error; err != nil {
+		return err
+	}
+
+	noteDB = ToNoteDB(note)
+	noteDB.ID = id
+
+	if err := nr.DB.WithContext(ctx).Save(&noteDB).Error; err != nil {
+		return err
 	}
 
 	return nil

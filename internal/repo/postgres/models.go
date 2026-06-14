@@ -9,7 +9,7 @@ type NoteDB struct {
 	ID        int       `gorm:"column:id;primaryKey"`
 	Text      string    `gorm:"column:text"`
 	CreatedAt time.Time `gorm:"column:created_at;not null"`
-	UpdatetAt time.Time `gorm:"column:updated_at;not null"`
+	UpdatedAt time.Time `gorm:"column:updated_at;not null"`
 }
 
 func (NoteDB) TableName() string {
