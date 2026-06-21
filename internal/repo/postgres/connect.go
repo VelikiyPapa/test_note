@@ -29,7 +29,7 @@ func Open(dsn string, maxOpenConns, maxIdleConns int, connMaxLifeTime time.Durat
 func Migrate(db *gorm.DB) error {
 	log.Println("автомиграция началась")
 
-	err := db.AutoMigrate(&NoteDB{})
+	err := db.AutoMigrate(&UserDB{}, &NoteDB{})
 	if err != nil {
 		return err
 	}

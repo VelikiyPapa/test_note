@@ -27,10 +27,10 @@ func (nr *NoteRepo) Create(ctx context.Context, note models.Note) error {
 	return nil
 }
 
-func (nr *NoteRepo) Get(ctx context.Context, id int) (models.Note, error) {
+func (nr *NoteRepo) Get(ctx context.Context, userID, noteID int) (models.Note, error) {
 	var noteDB NoteDB
 
-	if err := nr.DB.WithContext(ctx).First(&noteDB, id).Error; err != nil {
+	if err := nr.DB.WithContext(ctx).Where("user_id = ? AND id = ?", userID, noteID).First(&noteDB).Error; err != nil {
 		return models.Note{}, err
 	}
 
@@ -39,10 +39,10 @@ func (nr *NoteRepo) Get(ctx context.Context, id int) (models.Note, error) {
 	return note, nil
 }
 
-func (nr *NoteRepo) Delete(ctx context.Context, id int) error {
+func (nr *NoteRepo) Delete(ctx context.Context, userID, noteID int) error {
 	var noteDB NoteDB
 
-	d := nr.DB.WithContext(ctx).Delete(&noteDB, id)
+	d := nr.DB.WithContext(ctx).Where("user_id = ? AND id = ?", userID, noteID).Delete(&noteDB)
 
 	if err := d.Error; err != nil {
 		return err
@@ -55,18 +55,16 @@ func (nr *NoteRepo) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (nr *NoteRepo) Put(ctx context.Context, id int, note models.Note) error {
-	var noteDB NoteDB
+func (nr *NoteRepo) Put(ctx context.Context, userID, noteID int, note models.Note) error {
 
-	if err := nr.DB.WithContext(ctx).First(&noteDB, id).Error; err != nil {
-		return err
+	p := nr.DB.WithContext(ctx).Model(&NoteDB{}).Where("user_id = ? AND id = ?", userID, noteID).Update("text", note.Text)
+
+	if p.Error != nil {
+		return p.Error
 	}
 
-	noteDB = ToNoteDB(note)
-	noteDB.ID = id
-
-	if err := nr.DB.WithContext(ctx).Save(&noteDB).Error; err != nil {
-		return err
+	if p.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil

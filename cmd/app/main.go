@@ -14,11 +14,9 @@ import (
 	"time"
 )
 
-// DONE реализовать update на всех слоях (put)
-
-// DONE сделать graceful shutdown
-
-// DONE в mw логирвоание: реализовать получение статус кода для клиента
+// DONE Добавить сущность user
+// TODO Учитывать в заметках userа (заметка должна принадлежать ему)
+// DONE Использовать пакет sc
 
 func main() {
 	log.Println("получаем конфиги")
@@ -44,9 +42,6 @@ func main() {
 	log.Println("реализуем транспортный слой (роутер)")
 	noteHandler := my_http.NewNoteHandler(noteService)
 	mux := my_http.NewRouter(noteHandler)
-
-	// log.Println("Сервер запустился на 8080")
-	// http.ListenAndServe(":8080", mux)
 
 	server := &http.Server{
 		Addr:    ":8080",

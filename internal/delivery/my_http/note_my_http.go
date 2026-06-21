@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"strconv"
 	"test/internal/models"
+	"test/internal/shortcut"
 )
 
 type NoteService interface {
 	CreateNote(ctx context.Context, note models.Note) error
-	GetNote(ctx context.Context, id int) (models.Note, error)
-	DeleteNote(ctx context.Context, id int) error
-	PutNote(ctx context.Context, id int, note models.Note) error
+	GetNote(ctx context.Context, userID, noteID int) (models.Note, error)
+	DeleteNote(ctx context.Context, userID, noteID int) error
+	PutNote(ctx context.Context, userID, noteID int, note models.Note) error
 }
 
 type NoteHandler struct {
@@ -28,10 +29,7 @@ func NewNoteHandler(ns NoteService) *NoteHandler {
 func (nh *NoteHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 	var note models.Note
 
-	if err := json.NewDecoder(r.Body).Decode(&note); err != nil {
-		http.Error(w, "не удалось распарсить json", http.StatusBadRequest)
-		return
-	}
+	shortcut.ReadJSON(w, r, &note)
 
 	err := nh.Service.CreateNote(r.Context(), note)
 	if err != nil {
@@ -43,49 +41,49 @@ func (nh *NoteHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 		"msg": "Заметка успешно создана",
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Header().Set("content-type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	shortcut.SendJSON(w, http.StatusCreated, result)
 }
 
 func (nh *NoteHandler) GetNote(w http.ResponseWriter, r *http.Request) {
-	rawID := r.PathValue("id")
-	if rawID == "" {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.Atoi(rawID)
+	rawNoteID := r.PathValue("id")
+	noteID, err := strconv.Atoi(rawNoteID)
 	if err != nil {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
+		http.Error(w, "некорректный note id", http.StatusBadRequest)
 		return
 	}
 
-	note, err := nh.Service.GetNote(r.Context(), id)
+	rawUserID := r.PathValue("user_id")
+	userID, err := strconv.Atoi(rawUserID)
+	if err != nil {
+		http.Error(w, "некорректный user id", http.StatusBadRequest)
+		return
+	}
+
+	note, err := nh.Service.GetNote(r.Context(), userID, noteID)
 	if err != nil {
 		http.Error(w, "не удалось получить карту", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("content-type", "application/json")
-	json.NewEncoder(w).Encode(note)
+	shortcut.SendJSON(w, http.StatusOK, note)
 }
 
 func (nh *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
-	rawId := r.PathValue("id")
-	if rawId == "" {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.Atoi(rawId)
+	rawNoteID := r.PathValue("id")
+	noteID, err := strconv.Atoi(rawNoteID)
 	if err != nil {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
+		http.Error(w, "некорректный note id", http.StatusBadRequest)
 		return
 	}
 
-	err = nh.Service.DeleteNote(r.Context(), id)
+	rawUserID := r.PathValue("user_id")
+	userID, err := strconv.Atoi(rawUserID)
+	if err != nil {
+		http.Error(w, "некорректный user id", http.StatusBadRequest)
+		return
+	}
+
+	err = nh.Service.DeleteNote(r.Context(), userID, noteID)
 	if err != nil {
 		http.Error(w, "не получилось удалить заметку", http.StatusInternalServerError)
 		return
@@ -95,15 +93,17 @@ func (nh *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (nh *NoteHandler) PutNote(w http.ResponseWriter, r *http.Request) {
-	rawID := r.PathValue("id")
-	if rawID == "" {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
+	rawNoteID := r.PathValue("id")
+	noteID, err := strconv.Atoi(rawNoteID)
+	if err != nil {
+		http.Error(w, "некорректный note id", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.Atoi(rawID)
+	rawUserID := r.PathValue("user_id")
+	userID, err := strconv.Atoi(rawUserID)
 	if err != nil {
-		http.Error(w, "некорректный id", http.StatusBadRequest)
+		http.Error(w, "некорректный user id", http.StatusBadRequest)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (nh *NoteHandler) PutNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = nh.Service.PutNote(r.Context(), id, note)
+	err = nh.Service.PutNote(r.Context(), userID, noteID, note)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -124,7 +124,5 @@ func (nh *NoteHandler) PutNote(w http.ResponseWriter, r *http.Request) {
 		"msg": "Заметка успешно обновлена",
 	}
 
-	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	shortcut.SendJSON(w, http.StatusOK, result)
 }
